@@ -5,6 +5,7 @@
       <ID>9</ID>
       <Description>"Open"</Description>
       <Options moHideChildren="1"/>
+      <LastState Activated="1"/>
       <VariableType>Auto Assembler Script</VariableType>
       <AssemblerScript>[ENABLE]
 {$lua}
@@ -35,10 +36,12 @@ sekiroPointerBases =
     {name = "LockTgtMan", staticOffset = "3d78058", aob = "48 8b 35 ?? ?? ?? ?? 49 8b d7 49 8b ce", aobOffset = 0},
     {name = "DamageManagement", staticOffset = "3d77ef0", aob = "48 8b 1d ?? ?? ?? ?? 48 8b f0 48 85 db", aobOffset = 0},
     {name = "MapItemMan", staticOffset = "3d6cdc0", aob = "45 33 c0 33 d2 48 8b 0d", aobOffset = 5},
+    --{name = "WorldHitMan", staticOffset = "3d77fc0"},
     {name = "Dlc", staticOffset = "3d9c578", aob = "48 8b 0d ?? ?? ?? ?? 44 8b cf 4c 8b c6 48 8b d3", aobOffset = 0},
     {name = "DebugFlags", staticOffset = "3d7a366", aob = "84 c0 0f ?? ?? ?? ?? ?? ba 88 00 00 00", aobOffset = -34},
     {name = "DebugMenu", staticOffset = "3f42800", aob = "40 53 48 81 ec 80 00 00 00 48 83 3d ?? ?? ?? ?? 00 4c 8b d2 48 8b d9", aobOffset = 9},
     {name = "RenderFlags", staticOffset = "3d77fa4", aob = "40 53 56 41 56 48 83 ec 40 44 0f b6 35 ?? ?? ?? ?? 48 8b f1", aobOffset = 43},
+    {name = "TargetingDrawFlags", staticOffset = "3d54a28", aob = "0f b7 47 5a a8 02 75 ?? 80 3d f4", aobOffset = 8},
 }
 
 sekiroFuncs =
@@ -196,6 +199,7 @@ registerSekiroFuncs()
 --Activate init scripts
 addressList.getMemoryRecordByDescription("Param Utils").Active = true
 addressList.getMemoryRecordByDescription("Fill Param Data").Active = true
+addressList.getMemoryRecordByDescription("Patch \"Draw Font\" To Stop Crashes").Active = true
 
 
 
@@ -220,6 +224,36 @@ function toHex(num)
     return string.format("%x", num)
 end
 
+function executeOnCondition(condition, func, testInterval, timeUntilGiveup, executeOnGiveup)
+    condition = condition or function() return true end
+    func = func or function()  end
+    testInterval = testInterval or 100
+    timeUntilGiveup = timeUntilGiveup or 180 * 1000 --3 minutes
+    executeOnGiveup = executeOnGiveup or false
+
+    local timeCount = 0
+    local waitingTimer = createTimer(getMainForm())
+    waitingTimer.Interval = testInterval or 100
+    waitingTimer.OnTimer = function(timer)
+        if condition() then
+            timer.destroy()
+            func()
+            return
+        end
+
+        if timeCount &gt;= timeUntilGiveup then
+            if executeOnGiveup then
+                func()
+            end
+
+            timer.destroy()
+            return
+        end
+
+        timeCount = timeCount + waitingTimer.Interval
+    end
+end
+
 [DISABLE]
 {$lua}
 for _, base in ipairs(sekiroPointerBases) do
@@ -235,6 +269,7 @@ end
           <ID>17</ID>
           <Description>"Hero"</Description>
           <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="7FF4ABE35F98"/>
           <ShowAsHex>1</ShowAsHex>
           <ShowAsSigned>0</ShowAsSigned>
           <GroupHeader>1</GroupHeader>
@@ -247,11 +282,13 @@ end
               <ID>19</ID>
               <Description>"Stats"</Description>
               <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
                   <ID>20</ID>
                   <Description>"HP"</Description>
+                  <LastState Value="672" RealAddress="7FF4A67534B0"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -265,6 +302,7 @@ end
                 <CheatEntry>
                   <ID>21</ID>
                   <Description>"MaxHP"</Description>
+                  <LastState Value="1120" RealAddress="7FF4A67534B4"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -278,6 +316,7 @@ end
                 <CheatEntry>
                   <ID>22</ID>
                   <Description>"BaseHP"</Description>
+                  <LastState Value="1120" RealAddress="7FF4A67534B8"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -291,6 +330,7 @@ end
                 <CheatEntry>
                   <ID>1337271259</ID>
                   <Description>"Posture (Stamina)"</Description>
+                  <LastState Value="420" RealAddress="7FF4A67534C8"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -304,6 +344,7 @@ end
                 <CheatEntry>
                   <ID>1337271261</ID>
                   <Description>"MaxPosture (MaxStamina)"</Description>
+                  <LastState Value="420" RealAddress="7FF4A67534CC"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -317,6 +358,7 @@ end
                 <CheatEntry>
                   <ID>1337271260</ID>
                   <Description>"BasePosture (BaseStamina)"</Description>
+                  <LastState Value="420" RealAddress="7FF4A67534D0"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -330,6 +372,7 @@ end
                 <CheatEntry>
                   <ID>1337271224</ID>
                   <Description>"Sen"</Description>
+                  <LastState Value="1782" RealAddress="7FF49E7CB72C"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -342,6 +385,7 @@ end
                 <CheatEntry>
                   <ID>1337274718</ID>
                   <Description>"Attack Power"</Description>
+                  <LastState Value="80" RealAddress="7FF49E7CB6F8"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -357,11 +401,13 @@ end
               <ID>27</ID>
               <Description>"Resistances"</Description>
               <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
                   <ID>28</ID>
                   <Description>"Poison"</Description>
+                  <LastState Value="200" RealAddress="7FF4A6753600"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -375,6 +421,7 @@ end
                 <CheatEntry>
                   <ID>33</ID>
                   <Description>"Poison Max"</Description>
+                  <LastState Value="200" RealAddress="7FF4A6753614"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -388,6 +435,7 @@ end
                 <CheatEntry>
                   <ID>29</ID>
                   <Description>"Terror"</Description>
+                  <LastState Value="200" RealAddress="7FF4A6753604"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -401,6 +449,7 @@ end
                 <CheatEntry>
                   <ID>34</ID>
                   <Description>"Terror Max"</Description>
+                  <LastState Value="200" RealAddress="7FF4A6753618"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -414,6 +463,7 @@ end
                 <CheatEntry>
                   <ID>30</ID>
                   <Description>"Burn"</Description>
+                  <LastState Value="200" RealAddress="7FF4A6753608"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -427,6 +477,7 @@ end
                 <CheatEntry>
                   <ID>35</ID>
                   <Description>"Burn Max"</Description>
+                  <LastState Value="200" RealAddress="7FF4A675361C"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -440,6 +491,7 @@ end
                 <CheatEntry>
                   <ID>31</ID>
                   <Description>"Enfeebled"</Description>
+                  <LastState Value="200" RealAddress="7FF4A675360C"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -453,6 +505,7 @@ end
                 <CheatEntry>
                   <ID>36</ID>
                   <Description>"Enfeebled Max"</Description>
+                  <LastState Value="200" RealAddress="7FF4A6753620"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -466,6 +519,7 @@ end
                 <CheatEntry>
                   <ID>32</ID>
                   <Description>"Shock"</Description>
+                  <LastState Value="200" RealAddress="7FF4A6753610"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -479,6 +533,7 @@ end
                 <CheatEntry>
                   <ID>37</ID>
                   <Description>"Shock Max"</Description>
+                  <LastState Value="200" RealAddress="7FF4A6753624"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -495,12 +550,14 @@ end
               <ID>38</ID>
               <Description>"Character Flags"</Description>
               <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
                   <ID>1337271217</ID>
                   <Description>"NoDead"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="0" RealAddress="7FF4A67535A8"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Binary</VariableType>
                   <BitStart>2</BitStart>
@@ -518,6 +575,7 @@ end
                   <ID>1337193058</ID>
                   <Description>"NoDamage"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="0" RealAddress="7FF4A67535A8"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Binary</VariableType>
                   <BitStart>3</BitStart>
@@ -535,6 +593,7 @@ end
                   <ID>1337271218</ID>
                   <Description>"NoFPConsumption"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="0" RealAddress="7FF4A67535A8"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Binary</VariableType>
                   <BitStart>5</BitStart>
@@ -552,6 +611,7 @@ end
                   <ID>1337271219</ID>
                   <Description>"NoStaminaConsumption"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="0" RealAddress="7FF4A67535A8"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Binary</VariableType>
                   <BitStart>4</BitStart>
@@ -569,6 +629,7 @@ end
                   <ID>1337271253</ID>
                   <Description>"No Hit"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="0" RealAddress="7FF4A6751DB0"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Binary</VariableType>
                   <BitStart>5</BitStart>
@@ -584,6 +645,7 @@ end
                   <ID>1337271257</ID>
                   <Description>"No Attack"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="0" RealAddress="7FF4A6751DB0"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Binary</VariableType>
                   <BitStart>6</BitStart>
@@ -599,6 +661,7 @@ end
                   <ID>1337271256</ID>
                   <Description>"No Move"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="0" RealAddress="7FF4A6751DB0"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Binary</VariableType>
                   <BitStart>7</BitStart>
@@ -614,6 +677,7 @@ end
                   <ID>1337271255</ID>
                   <Description>"No Goods Consume"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="0" RealAddress="7FF4A6751DB2"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Binary</VariableType>
                   <BitStart>4</BitStart>
@@ -629,6 +693,7 @@ end
                   <ID>1337271254</ID>
                   <Description>"No ResourceItem Consume (Spirit Emblems)"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="0" RealAddress="7FF4A6751DB3"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Binary</VariableType>
                   <BitStart>0</BitStart>
@@ -644,6 +709,7 @@ end
                   <ID>1337271258</ID>
                   <Description>"No Update"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="0" RealAddress="7FF4A6751DB1"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Binary</VariableType>
                   <BitStart>4</BitStart>
@@ -659,6 +725,7 @@ end
                   <ID>1337274024</ID>
                   <Description>"Draw"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="1" RealAddress="7FF4A6751881"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Binary</VariableType>
                   <BitStart>3</BitStart>
@@ -676,12 +743,14 @@ end
               <ID>1337271220</ID>
               <Description>"Position"</Description>
               <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
                   <ID>1337271221</ID>
                   <Description>"X"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="-823.5274048" RealAddress="7FF4A6754F70"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Float</VariableType>
                   <Address>WorldChrMan</Address>
@@ -696,6 +765,7 @@ end
                   <ID>1337271223</ID>
                   <Description>"Y"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="97.07913208" RealAddress="7FF4A6754F74"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Float</VariableType>
                   <Address>WorldChrMan</Address>
@@ -710,6 +780,7 @@ end
                   <ID>1337271222</ID>
                   <Description>"Z"</Description>
                   <DropDownListLink>ON_OFF</DropDownListLink>
+                  <LastState Value="398.4014587" RealAddress="7FF4A6754F78"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Float</VariableType>
                   <Address>WorldChrMan</Address>
@@ -724,6 +795,7 @@ end
                   <ID>1337274027</ID>
                   <Description>"Store Position And Tp"</Description>
                   <Options moHideChildren="1"/>
+                  <LastState/>
                   <VariableType>Auto Assembler Script</VariableType>
                   <AssemblerScript>{$lua}
 [ENABLE]
@@ -758,6 +830,7 @@ end
                       <ID>1337274682</ID>
                       <Description>"Position 1"</Description>
                       <Options moHideChildren="1"/>
+                      <LastState/>
                       <VariableType>Auto Assembler Script</VariableType>
                       <AssemblerScript>{$lua}
 [ENABLE]
@@ -774,6 +847,7 @@ positionUtil.tp(positionUtil[1])
                       <ID>1337274689</ID>
                       <Description>"Position 2"</Description>
                       <Options moHideChildren="1"/>
+                      <LastState/>
                       <VariableType>Auto Assembler Script</VariableType>
                       <AssemblerScript>{$lua}
 [ENABLE]
@@ -790,6 +864,7 @@ positionUtil.tp(positionUtil[2])
                       <ID>1337274688</ID>
                       <Description>"Position 3"</Description>
                       <Options moHideChildren="1"/>
+                      <LastState/>
                       <VariableType>Auto Assembler Script</VariableType>
                       <AssemblerScript>{$lua}
 [ENABLE]
@@ -806,6 +881,7 @@ positionUtil.tp(positionUtil[3])
                       <ID>1337274687</ID>
                       <Description>"Position 4"</Description>
                       <Options moHideChildren="1"/>
+                      <LastState/>
                       <VariableType>Auto Assembler Script</VariableType>
                       <AssemblerScript>{$lua}
 [ENABLE]
@@ -822,6 +898,7 @@ positionUtil.tp(positionUtil[4])
                       <ID>1337274686</ID>
                       <Description>"Position 5"</Description>
                       <Options moHideChildren="1"/>
+                      <LastState/>
                       <VariableType>Auto Assembler Script</VariableType>
                       <AssemblerScript>{$lua}
 [ENABLE]
@@ -842,11 +919,13 @@ positionUtil.tp(positionUtil[5])
               <ID>1337271234</ID>
               <Description>"Animation"</Description>
               <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
                   <ID>1337101616</ID>
                   <Description>"PlaySpeed"</Description>
+                  <LastState Value="1" RealAddress="7FF4A6754350"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Float</VariableType>
                   <Address>worldchrman</Address>
@@ -860,6 +939,7 @@ positionUtil.tp(positionUtil[5])
                 <CheatEntry>
                   <ID>1337081655</ID>
                   <Description>"Current Animation"</Description>
+                  <LastState Value="0" RealAddress="7FF4A6754B40"/>
                   <ShowAsSigned>1</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>worldchrman</Address>
@@ -873,6 +953,7 @@ positionUtil.tp(positionUtil[5])
                 <CheatEntry>
                   <ID>1337271236</ID>
                   <Description>"Current Animation Name"</Description>
+                  <LastState RealAddress="7FF4A6753EC8"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>String</VariableType>
                   <Length>32</Length>
@@ -893,11 +974,13 @@ positionUtil.tp(positionUtil[5])
               <ID>1337271237</ID>
               <Description>"GameData"</Description>
               <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
                   <ID>1337104258</ID>
                   <Description>"PlayTime"</Description>
+                  <LastState Value="589235608" RealAddress="7FF49E6D06BC"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>gamedata</Address>
@@ -908,6 +991,7 @@ positionUtil.tp(positionUtil[5])
                 <CheatEntry>
                   <ID>1337271238</ID>
                   <Description>"ClearCount (NG+ LVL)"</Description>
+                  <LastState Value="7" RealAddress="7FF49E6D0690"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>gamedata</Address>
@@ -918,6 +1002,7 @@ positionUtil.tp(positionUtil[5])
                 <CheatEntry>
                   <ID>1337103788</ID>
                   <Description>"ClearState"</Description>
+                  <LastState Value="2" RealAddress="7FF49E6D0694"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>gamedata</Address>
@@ -928,6 +1013,7 @@ positionUtil.tp(positionUtil[5])
                 <CheatEntry>
                   <ID>1337103798</ID>
                   <Description>"Death Num"</Description>
+                  <LastState Value="639" RealAddress="7FF49E6D06B0"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>gamedata</Address>
@@ -938,6 +1024,7 @@ positionUtil.tp(positionUtil[5])
                 <CheatEntry>
                   <ID>1337272595</ID>
                   <Description>"Hardmode Unlocked (Can Be Charmless)"</Description>
+                  <LastState Value="1" RealAddress="7FF49E7F9E7A"/>
                   <ShowAsSigned>1</ShowAsSigned>
                   <VariableType>Byte</VariableType>
                   <Address>gamedata</Address>
@@ -954,18 +1041,21 @@ positionUtil.tp(positionUtil[5])
           <ID>1337271240</ID>
           <Description>"Scripts"</Description>
           <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
           <GroupHeader>1</GroupHeader>
           <CheatEntries>
             <CheatEntry>
               <ID>1337271241</ID>
               <Description>"Items and Skills"</Description>
               <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
                   <ID>1337272523</ID>
                   <Description>"Give Item Debug"</Description>
                   <Options moHideChildren="1"/>
+                  <LastState/>
                   <VariableType>Auto Assembler Script</VariableType>
                   <AssemblerScript>[ENABLE]
 alloc(ItemDebugCategory, 1)
@@ -1499,12 +1589,14 @@ end
                     <CheatEntry>
                       <ID>1337272526</ID>
                       <Description>"-- Skills are items!"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
                       <Color>C08080</Color>
                       <GroupHeader>1</GroupHeader>
                     </CheatEntry>
                     <CheatEntry>
                       <ID>1337272525</ID>
                       <Description>"Spawn Item"</Description>
+                      <LastState/>
                       <Color>808000</Color>
                       <VariableType>Auto Assembler Script</VariableType>
                       <AssemblerScript>{$lua}
@@ -1863,6 +1955,7 @@ disableMemrec(memrec)
               <ID>1337045195</ID>
               <Description>"Targeted NPC"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>define(bytes,48 8B 80 F8 1F 00 00)
 
@@ -2067,6 +2160,7 @@ address:
                   <ID>1337273420</ID>
                   <Description>"Poise"</Description>
                   <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
                   <GroupHeader>1</GroupHeader>
                   <CheatEntries>
                     <CheatEntry>
@@ -2111,6 +2205,7 @@ address:
                   <ID>1337272135</ID>
                   <Description>"Resistances"</Description>
                   <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
                   <GroupHeader>1</GroupHeader>
                   <CheatEntries>
                     <CheatEntry>
@@ -2239,6 +2334,7 @@ address:
                   <ID>1337272146</ID>
                   <Description>"Character Flags"</Description>
                   <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
                   <GroupHeader>1</GroupHeader>
                   <CheatEntries>
                     <CheatEntry>
@@ -2409,6 +2505,7 @@ address:
                   <ID>1337200450</ID>
                   <Description>"Position"</Description>
                   <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
                   <GroupHeader>1</GroupHeader>
                   <CheatEntries>
                     <CheatEntry>
@@ -2453,6 +2550,7 @@ address:
                     <CheatEntry>
                       <ID>1337200460</ID>
                       <Description>"Teleport Npc to Self"</Description>
+                      <LastState/>
                       <VariableType>Auto Assembler Script</VariableType>
                       <AssemblerScript>[ENABLE]
 [[[TargetedNPC]+1FF8]+68]+80:
@@ -2466,6 +2564,7 @@ disableMemrec(memrec)
                     <CheatEntry>
                       <ID>1337200461</ID>
                       <Description>"Teleport Self to Npc"</Description>
+                      <LastState/>
                       <VariableType>Auto Assembler Script</VariableType>
                       <AssemblerScript>[ENABLE]
 [[[[WorldChrMan]+88]+1FF8]+68]+80:
@@ -2482,6 +2581,7 @@ disableMemrec(memrec)
                   <ID>1337214621</ID>
                   <Description>"Animation"</Description>
                   <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
                   <GroupHeader>1</GroupHeader>
                   <CheatEntries>
                     <CheatEntry>
@@ -2556,6 +2656,7 @@ disableMemrec(memrec)
                   <ID>1337272497</ID>
                   <Description>"AI"</Description>
                   <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
                   <GroupHeader>1</GroupHeader>
                   <CheatEntries>
                     <CheatEntry>
@@ -2610,6 +2711,7 @@ disableMemrec(memrec)
                       <ID>1337273412</ID>
                       <Description>"Lua Timers"</Description>
                       <Options moHideChildren="1"/>
+                      <LastState Value="" RealAddress="00000000"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <GroupHeader>1</GroupHeader>
                       <Address>targetednpc</Address>
@@ -2737,6 +2839,7 @@ disableMemrec(memrec)
                       <ID>1337273415</ID>
                       <Description>"Lua Numbers"</Description>
                       <Options moHideChildren="1"/>
+                      <LastState Value="" RealAddress="00000000"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <GroupHeader>1</GroupHeader>
                       <Address>targetednpc</Address>
@@ -3200,6 +3303,7 @@ disableMemrec(memrec)
                       <ID>1337273417</ID>
                       <Description>"Lua String Indexed Number"</Description>
                       <Options moHideChildren="1"/>
+                      <LastState Value="" RealAddress="00000000"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <GroupHeader>1</GroupHeader>
                       <Address>targetednpc</Address>
@@ -8336,6 +8440,7 @@ disableMemrec(memrec)
                 <CheatEntry>
                   <ID>1337274750</ID>
                   <Description>"Parts"</Description>
+                  <LastState/>
                   <VariableType>Auto Assembler Script</VariableType>
                   <AssemblerScript>{$lua}
 [ENABLE]
@@ -8485,6 +8590,7 @@ end
                 <CheatEntry>
                   <ID>1337272092</ID>
                   <Description>"Control Enemy Dbg"</Description>
+                  <LastState/>
                   <VariableType>Auto Assembler Script</VariableType>
                   <AssemblerScript>[ENABLE]
 [[TargetedNPC]+50]+358:
@@ -8519,6 +8625,7 @@ dq 0
               <ID>1337271244</ID>
               <Description>"Event Flags"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(EventFlagID, 4)
@@ -8603,6 +8710,7 @@ end
               <ID>5</ID>
               <Description>"Execute Lua On AiLua"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 {$lua}
@@ -8625,11 +8733,13 @@ end
                 <CheatEntry>
                   <ID>1337274019</ID>
                   <Description>"Examples"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <GroupHeader>1</GroupHeader>
                   <CheatEntries>
                     <CheatEntry>
                       <ID>1337274018</ID>
                       <Description>"Modify Enemy Attacks Probability"</Description>
+                      <LastState/>
                       <VariableType>Auto Assembler Script</VariableType>
                       <AssemblerScript>{$lua}
 if syntaxcheck then return end
@@ -8661,6 +8771,7 @@ AiLuaState:dostring(myCode)
                     <CheatEntry>
                       <ID>1337274020</ID>
                       <Description>"Remove Regular Cooldowns"</Description>
+                      <LastState/>
                       <VariableType>Auto Assembler Script</VariableType>
                       <AssemblerScript>{$lua}
 if syntaxcheck then return end
@@ -8699,18 +8810,21 @@ AiLuaState:dostring(myCode)
           <ID>1337272539</ID>
           <Description>"Params"</Description>
           <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
           <GroupHeader>1</GroupHeader>
           <CheatEntries>
             <CheatEntry>
               <ID>1337273011</ID>
               <Description>"Dependencies"</Description>
               <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
               <Color>C0C0C0</Color>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
                   <ID>1337273010</ID>
                   <Description>"Param Utils"</Description>
+                  <LastState Activated="1"/>
                   <Color>C0C0C0</Color>
                   <VariableType>Auto Assembler Script</VariableType>
                   <AssemblerScript>{$lua}
@@ -8782,6 +8896,7 @@ end
                 <CheatEntry>
                   <ID>1337273009</ID>
                   <Description>"Fill Param Data"</Description>
+                  <LastState Activated="1"/>
                   <Color>C0C0C0</Color>
                   <VariableType>Auto Assembler Script</VariableType>
                   <AssemblerScript>{$lua}
@@ -16165,6 +16280,7 @@ paramsDataByName["Gconfig_AAQuality"] = {paramIndex = 135, address = readPointer
               <ID>1337273279</ID>
               <Description>"EquipParamWeapon"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDEquipParamWeapon, 4)
@@ -16197,6 +16313,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273014</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16207,6 +16324,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273280</ID>
               <Description>"EquipParamProtector"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDEquipParamProtector, 4)
@@ -16239,6 +16357,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273016</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16249,6 +16368,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273281</ID>
               <Description>"EquipParamAccessory"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDEquipParamAccessory, 4)
@@ -16281,6 +16401,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273018</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16291,6 +16412,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273282</ID>
               <Description>"EquipParamGoods"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDEquipParamGoods, 4)
@@ -16323,6 +16445,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273020</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16333,6 +16456,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273283</ID>
               <Description>"ReinforceParamWeapon"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDReinforceParamWeapon, 4)
@@ -16365,6 +16489,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273022</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16375,6 +16500,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273284</ID>
               <Description>"ReinforceParamProtector"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDReinforceParamProtector, 4)
@@ -16407,6 +16533,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273024</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16417,6 +16544,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273285</ID>
               <Description>"NpcParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDNpcParam, 4)
@@ -16449,6 +16577,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273026</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16459,6 +16588,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273286</ID>
               <Description>"AtkParam_Npc"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDAtkParam_Npc, 4)
@@ -16491,6 +16621,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273028</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16501,6 +16632,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273287</ID>
               <Description>"AtkParam_Pc"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDAtkParam_Pc, 4)
@@ -16533,6 +16665,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273030</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16543,6 +16676,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273288</ID>
               <Description>"NpcThinkParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDNpcThinkParam, 4)
@@ -16575,6 +16709,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273032</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16585,6 +16720,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273289</ID>
               <Description>"ObjectParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDObjectParam, 4)
@@ -16617,6 +16753,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273034</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16627,6 +16764,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273290</ID>
               <Description>"Bullet"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDBullet, 4)
@@ -16659,6 +16797,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273036</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16669,6 +16808,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273291</ID>
               <Description>"BehaviorParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDBehaviorParam, 4)
@@ -16701,6 +16841,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273038</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16711,6 +16852,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273292</ID>
               <Description>"BehaviorParam_PC"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDBehaviorParam_PC, 4)
@@ -16743,6 +16885,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273040</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16753,6 +16896,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273293</ID>
               <Description>"Magic"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMagic, 4)
@@ -16785,6 +16929,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273042</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16795,6 +16940,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273294</ID>
               <Description>"SpEffectParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDSpEffectParam, 4)
@@ -16827,6 +16973,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273044</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16837,6 +16984,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273295</ID>
               <Description>"SpEffectVfxParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDSpEffectVfxParam, 4)
@@ -16869,6 +17017,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273046</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16879,6 +17028,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273296</ID>
               <Description>"TalkParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDTalkParam, 4)
@@ -16911,6 +17061,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273048</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16921,6 +17072,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273297</ID>
               <Description>"MenuColorTableParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMenuColorTableParam, 4)
@@ -16953,6 +17105,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273050</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -16963,6 +17116,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273298</ID>
               <Description>"ItemLotParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDItemLotParam, 4)
@@ -16995,6 +17149,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273052</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17005,6 +17160,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273299</ID>
               <Description>"MoveParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMoveParam, 4)
@@ -17037,6 +17193,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273054</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17047,6 +17204,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273300</ID>
               <Description>"CharaInitParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDCharaInitParam, 4)
@@ -17079,6 +17237,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273056</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17089,6 +17248,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273301</ID>
               <Description>"EquipMtrlSetParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDEquipMtrlSetParam, 4)
@@ -17121,6 +17281,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273058</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17131,6 +17292,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273302</ID>
               <Description>"FaceGenParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDFaceGenParam, 4)
@@ -17163,6 +17325,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273060</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17173,6 +17336,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273303</ID>
               <Description>"FaceParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDFaceParam, 4)
@@ -17205,6 +17369,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273062</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17215,6 +17380,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273304</ID>
               <Description>"FaceRangeParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDFaceRangeParam, 4)
@@ -17247,6 +17413,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273064</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17257,6 +17424,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273305</ID>
               <Description>"RagdollParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDRagdollParam, 4)
@@ -17289,6 +17457,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273066</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17299,6 +17468,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273306</ID>
               <Description>"ShopLineupParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDShopLineupParam, 4)
@@ -17331,6 +17501,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273068</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17341,6 +17512,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273307</ID>
               <Description>"GameAreaParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGameAreaParam, 4)
@@ -17373,6 +17545,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273070</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17383,6 +17556,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273308</ID>
               <Description>"SkeletonParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDSkeletonParam, 4)
@@ -17415,6 +17589,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273072</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17425,6 +17600,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273309</ID>
               <Description>"CalcCorrectGraph"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDCalcCorrectGraph, 4)
@@ -17457,6 +17633,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273074</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17467,6 +17644,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273310</ID>
               <Description>"LockCamParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDLockCamParam, 4)
@@ -17499,6 +17677,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273076</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17509,6 +17688,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273311</ID>
               <Description>"ObjActParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDObjActParam, 4)
@@ -17541,6 +17721,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273078</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17551,6 +17732,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273312</ID>
               <Description>"HitMtrlParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDHitMtrlParam, 4)
@@ -17583,6 +17765,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273080</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17593,6 +17776,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273313</ID>
               <Description>"KnockBackParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDKnockBackParam, 4)
@@ -17625,6 +17809,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273082</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17635,6 +17820,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273314</ID>
               <Description>"DecalParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDDecalParam, 4)
@@ -17667,6 +17853,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273084</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17677,6 +17864,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273315</ID>
               <Description>"ActionButtonParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDActionButtonParam, 4)
@@ -17709,6 +17897,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273086</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17719,6 +17908,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273316</ID>
               <Description>"WeaponGenParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDWeaponGenParam, 4)
@@ -17751,6 +17941,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273088</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17761,6 +17952,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273317</ID>
               <Description>"ProtectorGenParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDProtectorGenParam, 4)
@@ -17793,6 +17985,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273090</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17803,6 +17996,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273318</ID>
               <Description>"GemGenParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGemGenParam, 4)
@@ -17835,6 +18029,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273092</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17845,6 +18040,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273319</ID>
               <Description>"GemeffectParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGemeffectParam, 4)
@@ -17877,6 +18073,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273094</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17887,6 +18084,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273320</ID>
               <Description>"GemCategoryParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGemCategoryParam, 4)
@@ -17919,6 +18117,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273096</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17929,6 +18128,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273321</ID>
               <Description>"GemDropDopingParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGemDropDopingParam, 4)
@@ -17961,6 +18161,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273098</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -17971,6 +18172,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273322</ID>
               <Description>"GemDropModifyParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGemDropModifyParam, 4)
@@ -18003,6 +18205,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273100</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18013,6 +18216,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273323</ID>
               <Description>"ModelSfxParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDModelSfxParam, 4)
@@ -18045,6 +18249,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273102</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18055,6 +18260,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273324</ID>
               <Description>"AiSoundParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDAiSoundParam, 4)
@@ -18087,6 +18293,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273104</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18097,6 +18304,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273325</ID>
               <Description>"PlayRegionParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDPlayRegionParam, 4)
@@ -18129,6 +18337,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273106</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18139,6 +18348,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273326</ID>
               <Description>"NetworkAreaParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDNetworkAreaParam, 4)
@@ -18171,6 +18381,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273108</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18181,6 +18392,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273327</ID>
               <Description>"NetworkParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDNetworkParam, 4)
@@ -18213,6 +18425,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273110</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18223,6 +18436,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273328</ID>
               <Description>"NetworkMsgParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDNetworkMsgParam, 4)
@@ -18255,6 +18469,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273112</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18265,6 +18480,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273329</ID>
               <Description>"BudgetParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDBudgetParam, 4)
@@ -18297,6 +18513,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273114</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18307,6 +18524,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273330</ID>
               <Description>"BonfireWarpParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDBonfireWarpParam, 4)
@@ -18339,6 +18557,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273116</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18349,6 +18568,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273331</ID>
               <Description>"MenuPropertySpecParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMenuPropertySpecParam, 4)
@@ -18381,6 +18601,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273118</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18391,6 +18612,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273332</ID>
               <Description>"MenuPropertyLayoutParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMenuPropertyLayoutParam, 4)
@@ -18423,6 +18645,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273120</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18433,6 +18656,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273333</ID>
               <Description>"MenuValueTableParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMenuValueTableParam, 4)
@@ -18465,6 +18689,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273122</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18475,6 +18700,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273334</ID>
               <Description>"Ceremony"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDCeremony, 4)
@@ -18507,6 +18733,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273124</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18517,6 +18744,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273335</ID>
               <Description>"PhantomParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDPhantomParam, 4)
@@ -18549,6 +18777,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273126</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18559,6 +18788,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273336</ID>
               <Description>"CharMakeMenuTopParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDCharMakeMenuTopParam, 4)
@@ -18591,6 +18821,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273128</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18601,6 +18832,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273337</ID>
               <Description>"CharMakeMenuListItemParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDCharMakeMenuListItemParam, 4)
@@ -18633,6 +18865,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273130</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18643,6 +18876,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273338</ID>
               <Description>"NewMenuColorTableParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDNewMenuColorTableParam, 4)
@@ -18675,6 +18909,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273132</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18685,6 +18920,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273339</ID>
               <Description>"HitEffectSfxAngleParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDHitEffectSfxAngleParam, 4)
@@ -18717,6 +18953,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273134</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18727,6 +18964,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273340</ID>
               <Description>"HitEffectSfxConceptParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDHitEffectSfxConceptParam, 4)
@@ -18759,6 +18997,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273136</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18769,6 +19008,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273341</ID>
               <Description>"HitEffectSfxConceptJustGuardParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDHitEffectSfxConceptJustGuardParam, 4)
@@ -18801,6 +19041,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273138</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18811,6 +19052,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273342</ID>
               <Description>"HitEffectSfxParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDHitEffectSfxParam, 4)
@@ -18843,6 +19085,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273140</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18853,6 +19096,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273343</ID>
               <Description>"HitEffectSeParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDHitEffectSeParam, 4)
@@ -18885,6 +19129,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273142</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18895,6 +19140,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273344</ID>
               <Description>"HitEffectSeJustGuardParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDHitEffectSeJustGuardParam, 4)
@@ -18927,6 +19173,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273144</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18937,6 +19184,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273345</ID>
               <Description>"HitEffectSeHitWallParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDHitEffectSeHitWallParam, 4)
@@ -18969,6 +19217,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273146</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -18979,6 +19228,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273346</ID>
               <Description>"WepAbsorpPosParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDWepAbsorpPosParam, 4)
@@ -19011,6 +19261,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273148</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19021,6 +19272,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273347</ID>
               <Description>"ToughnessParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDToughnessParam, 4)
@@ -19053,6 +19305,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273150</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19063,6 +19316,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273348</ID>
               <Description>"DirectionCameraParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDDirectionCameraParam, 4)
@@ -19095,6 +19349,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273152</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19105,6 +19360,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273349</ID>
               <Description>"RoleParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDRoleParam, 4)
@@ -19137,6 +19393,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273154</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19147,6 +19404,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273350</ID>
               <Description>"WetAspectParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDWetAspectParam, 4)
@@ -19179,6 +19437,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273156</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19189,6 +19448,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273351</ID>
               <Description>"CultSettingParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDCultSettingParam, 4)
@@ -19221,6 +19481,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273158</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19231,6 +19492,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273352</ID>
               <Description>"SwordArtsParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDSwordArtsParam, 4)
@@ -19263,6 +19525,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273160</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19273,6 +19536,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273353</ID>
               <Description>"HPEstusFlaskRecoveryParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDHPEstusFlaskRecoveryParam, 4)
@@ -19305,6 +19569,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273162</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19315,6 +19580,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273354</ID>
               <Description>"MPEstusFlaskRecoveryParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMPEstusFlaskRecoveryParam, 4)
@@ -19347,6 +19613,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273164</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19357,6 +19624,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273355</ID>
               <Description>"MultiPlayCorrectionParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMultiPlayCorrectionParam, 4)
@@ -19389,6 +19657,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273166</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19399,6 +19668,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273356</ID>
               <Description>"MapMimicryEstablishmentParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMapMimicryEstablishmentParam, 4)
@@ -19431,6 +19701,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273168</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19441,6 +19712,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273357</ID>
               <Description>"UpperArmParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDUpperArmParam, 4)
@@ -19473,6 +19745,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273170</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19483,6 +19756,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273358</ID>
               <Description>"AttackElementCorrectParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDAttackElementCorrectParam, 4)
@@ -19515,6 +19789,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273172</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19525,6 +19800,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273359</ID>
               <Description>"ThrowDirectionSfxParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDThrowDirectionSfxParam, 4)
@@ -19557,6 +19833,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273174</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19567,6 +19844,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273360</ID>
               <Description>"ThrowDirectionSeParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDThrowDirectionSeParam, 4)
@@ -19599,6 +19877,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273176</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19609,6 +19888,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273361</ID>
               <Description>"ThrowDirectionDecalParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDThrowDirectionDecalParam, 4)
@@ -19641,6 +19921,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273178</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19651,6 +19932,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273362</ID>
               <Description>"FootSfxParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDFootSfxParam, 4)
@@ -19683,6 +19965,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273180</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19693,6 +19976,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273363</ID>
               <Description>"NpcAiActionParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDNpcAiActionParam, 4)
@@ -19725,6 +20009,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273182</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19735,6 +20020,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273364</ID>
               <Description>"BulletCreateLimitParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDBulletCreateLimitParam, 4)
@@ -19767,6 +20053,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273184</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19777,6 +20064,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273365</ID>
               <Description>"ClearCountCorrectParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDClearCountCorrectParam, 4)
@@ -19809,6 +20097,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273186</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19819,6 +20108,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273366</ID>
               <Description>"GameProgressParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGameProgressParam, 4)
@@ -19851,6 +20141,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273188</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19861,6 +20152,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273367</ID>
               <Description>"LoadBalancerParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDLoadBalancerParam, 4)
@@ -19893,6 +20185,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273190</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19903,6 +20196,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273368</ID>
               <Description>"ObjectMaterialSfxParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDObjectMaterialSfxParam, 4)
@@ -19935,6 +20229,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273192</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19945,6 +20240,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273369</ID>
               <Description>"KnowledgeLoadScreenItemParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDKnowledgeLoadScreenItemParam, 4)
@@ -19977,6 +20273,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273194</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -19987,6 +20284,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273370</ID>
               <Description>"MenuOffscrRendParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMenuOffscrRendParam, 4)
@@ -20019,6 +20317,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273196</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20029,6 +20328,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273371</ID>
               <Description>"MultiHPEstusFlaskBonusParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMultiHPEstusFlaskBonusParam, 4)
@@ -20061,6 +20361,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273198</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20071,6 +20372,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273372</ID>
               <Description>"MultiMPEstusFlaskBonusParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMultiMPEstusFlaskBonusParam, 4)
@@ -20103,6 +20405,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273200</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20113,6 +20416,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273373</ID>
               <Description>"MultiSoulBonusRateParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMultiSoulBonusRateParam, 4)
@@ -20145,6 +20449,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273202</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20155,6 +20460,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273374</ID>
               <Description>"LoadBalancerDrawDistScaleParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDLoadBalancerDrawDistScaleParam, 4)
@@ -20187,6 +20493,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273204</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20197,6 +20504,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273375</ID>
               <Description>"CoolTimeParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDCoolTimeParam, 4)
@@ -20229,6 +20537,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273206</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20239,6 +20548,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273376</ID>
               <Description>"GrassTypeParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGrassTypeParam, 4)
@@ -20271,6 +20581,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273208</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20281,6 +20592,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273377</ID>
               <Description>"GrassLodRangeParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGrassLodRangeParam, 4)
@@ -20313,6 +20625,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273210</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20323,6 +20636,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273378</ID>
               <Description>"DyingEffectParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDDyingEffectParam, 4)
@@ -20355,6 +20669,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273212</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20365,6 +20680,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273379</ID>
               <Description>"CameraParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDCameraParam, 4)
@@ -20397,6 +20713,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273214</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20407,6 +20724,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273380</ID>
               <Description>"CameraSetParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDCameraSetParam, 4)
@@ -20439,6 +20757,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273216</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20449,6 +20768,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273381</ID>
               <Description>"WirePointSearchParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDWirePointSearchParam, 4)
@@ -20481,6 +20801,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273218</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20491,6 +20812,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273382</ID>
               <Description>"WireSetParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDWireSetParam, 4)
@@ -20523,6 +20845,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273220</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20533,6 +20856,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273383</ID>
               <Description>"ChrPhysicsVelocityChangeParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDChrPhysicsVelocityChangeParam, 4)
@@ -20565,6 +20889,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273222</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20575,6 +20900,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273384</ID>
               <Description>"StaminaControlParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDStaminaControlParam, 4)
@@ -20607,6 +20933,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273224</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20617,6 +20944,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273385</ID>
               <Description>"MaterialExParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMaterialExParam, 4)
@@ -20649,6 +20977,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273226</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20659,6 +20988,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273386</ID>
               <Description>"ThrowKindParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDThrowKindParam, 4)
@@ -20691,6 +21021,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273228</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20701,6 +21032,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273387</ID>
               <Description>"ResourceItemLotParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDResourceItemLotParam, 4)
@@ -20733,6 +21065,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273230</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20743,6 +21076,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273388</ID>
               <Description>"ResourceItemParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDResourceItemParam, 4)
@@ -20775,6 +21109,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273232</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20785,6 +21120,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273389</ID>
               <Description>"WhiteSignCoolTimeParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDWhiteSignCoolTimeParam, 4)
@@ -20817,6 +21153,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273234</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20827,6 +21164,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273390</ID>
               <Description>"ChrPhysicsHomingParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDChrPhysicsHomingParam, 4)
@@ -20859,6 +21197,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273236</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20869,6 +21208,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273391</ID>
               <Description>"WireVariationParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDWireVariationParam, 4)
@@ -20901,6 +21241,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273238</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20911,6 +21252,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273392</ID>
               <Description>"ActionUnlockParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDActionUnlockParam, 4)
@@ -20943,6 +21285,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273240</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20953,6 +21296,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273393</ID>
               <Description>"HitMaterialSpecialSettingParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDHitMaterialSpecialSettingParam, 4)
@@ -20985,6 +21329,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273242</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -20995,6 +21340,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273394</ID>
               <Description>"CutsceneParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDCutsceneParam, 4)
@@ -21027,6 +21373,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273244</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21037,6 +21384,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273395</ID>
               <Description>"DefaultKeyAssignParam00"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDDefaultKeyAssignParam00, 4)
@@ -21069,6 +21417,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273246</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21079,6 +21428,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273396</ID>
               <Description>"DefaultKeyAssignParam01"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDDefaultKeyAssignParam01, 4)
@@ -21111,6 +21461,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273248</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21121,6 +21472,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273397</ID>
               <Description>"DefaultKeyAssignParam02"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDDefaultKeyAssignParam02, 4)
@@ -21153,6 +21505,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273250</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21163,6 +21516,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273398</ID>
               <Description>"DefaultKeyAssignParam03"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDDefaultKeyAssignParam03, 4)
@@ -21195,6 +21549,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273252</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21205,6 +21560,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273399</ID>
               <Description>"DefaultKeyAssignParam04"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDDefaultKeyAssignParam04, 4)
@@ -21237,6 +21593,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273254</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21247,6 +21604,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273400</ID>
               <Description>"MenuParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMenuParam, 4)
@@ -21279,6 +21637,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273256</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21289,6 +21648,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273401</ID>
               <Description>"EnemyCommonParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDEnemyCommonParam, 4)
@@ -21321,6 +21681,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273258</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21331,6 +21692,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273402</ID>
               <Description>"TentativePlayerParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDTentativePlayerParam, 4)
@@ -21363,6 +21725,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273260</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21373,6 +21736,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273403</ID>
               <Description>"GraphicsParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGraphicsParam, 4)
@@ -21405,6 +21769,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273262</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21415,6 +21780,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273404</ID>
               <Description>"GameSystemParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGameSystemParam, 4)
@@ -21447,6 +21813,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273264</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21457,6 +21824,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273405</ID>
               <Description>"GraphicsConfig_ver2"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGraphicsConfig_ver2, 4)
@@ -21489,6 +21857,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273266</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21499,6 +21868,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273406</ID>
               <Description>"ActionGuideParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDActionGuideParam, 4)
@@ -21531,6 +21901,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273268</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21541,6 +21912,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273407</ID>
               <Description>"MapPartsParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMapPartsParam, 4)
@@ -21573,6 +21945,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273270</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21583,6 +21956,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273408</ID>
               <Description>"SkillParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDSkillParam, 4)
@@ -21615,6 +21989,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273272</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21625,6 +22000,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273409</ID>
               <Description>"MenuTutorialParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDMenuTutorialParam, 4)
@@ -21657,6 +22033,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273274</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21667,6 +22044,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273410</ID>
               <Description>"RematchWarpParam"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDRematchWarpParam, 4)
@@ -21699,6 +22077,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273276</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21709,6 +22088,7 @@ deleteChildrenMemrecs(memrec.Child[1])
               <ID>1337273411</ID>
               <Description>"Gconfig_AAQuality"</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ParamIDGconfig_AAQuality, 4)
@@ -21741,6 +22121,7 @@ deleteChildrenMemrecs(memrec.Child[1])
                 <CheatEntry>
                   <ID>1337273278</ID>
                   <Description>"Start"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <GroupHeader>1</GroupHeader>
                   <Address/>
@@ -21753,266 +22134,97 @@ deleteChildrenMemrecs(memrec.Child[1])
           <ID>1337271291</ID>
           <Description>"Debug"</Description>
           <Options moHideChildren="1"/>
+          <LastState Value="" Activated="1" RealAddress="00000000"/>
           <GroupHeader>1</GroupHeader>
           <CheatEntries>
             <CheatEntry>
-              <ID>1337271292</ID>
-              <Description>"CHR DBG"</Description>
+              <ID>1337274798</ID>
+              <Description>"Draws"</Description>
               <Options moHideChildren="1"/>
+              <LastState Value="" Activated="1" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
-                  <ID>1337274023</ID>
-                  <Description>"-- VERIFIED ON LATEST ONLY --"</Description>
+                  <ID>1337274794</ID>
+                  <Description>"Dependencies"</Description>
+                  <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
                   <Color>C0C0C0</Color>
                   <GroupHeader>1</GroupHeader>
+                  <CheatEntries>
+                    <CheatEntry>
+                      <ID>1337274792</ID>
+                      <Description>"Patch "Draw Font" To Stop Crashes"</Description>
+                      <LastState Activated="1"/>
+                      <Color>C0C0C0</Color>
+                      <VariableType>Auto Assembler Script</VariableType>
+                      <AssemblerScript>[ENABLE]
+aobscanmodule(DrawFontCrashAOB,sekiro.exe,48 8b fa 49 8b f0 48 8b d9) // should be unique
+define(DrawFontCrashInject,DrawFontCrashAOB-24)
+registersymbol(DrawFontCrashInject)
+
+DrawFontCrashInject:
+db C3 //ret
+
+[DISABLE]
+DrawFontCrashInject:
+db 48 //original
+
+unregisterSymbol(DrawFontCrashInject)
+</AssemblerScript>
+                    </CheatEntry>
+                  </CheatEntries>
                 </CheatEntry>
                 <CheatEntry>
-                  <ID>1337271264</ID>
-                  <Description>"Player No Dead"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+0</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271266</ID>
-                  <Description>"Player Exterminate"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+1</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271268</ID>
-                  <Description>"Player Exterminate Stamina"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+2</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271267</ID>
-                  <Description>"Player No Goods Consume"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+3</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271269</ID>
-                  <Description>"Player No ResourceItem Consume (SpiritEmblems)"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+4</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271270</ID>
-                  <Description>"Player No Revival Consume"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+5</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271271</ID>
-                  <Description>"All No MP Consume"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+6</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271272</ID>
-                  <Description>"All No Arrow Consume"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+7</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271273</ID>
-                  <Description>"All No Magic Consume"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+8</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271274</ID>
-                  <Description>"Player Hide"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+9</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271275</ID>
-                  <Description>"Player Silence"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+a</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271276</ID>
-                  <Description>"All No Dead"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+b</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271281</ID>
-                  <Description>"All No Damage"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+c</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271280</ID>
-                  <Description>"All No Hit"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+d</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271279</ID>
-                  <Description>"All No Attack"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+e</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271278</ID>
-                  <Description>"All No Move"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+f</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271283</ID>
-                  <Description>"All No WepProtDurability"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+11</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271277</ID>
-                  <Description>"All No Update Ai"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+10</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271282</ID>
-                  <Description>"All No Arts Points Consume"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+12</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271284</ID>
-                  <Description>"All No Goods Consume"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+13</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271285</ID>
-                  <Description>"All No ResourceItem Consume (SpiritEmblems)"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+14</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271286</ID>
-                  <Description>"Force Just Guard Mode"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+15</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271287</ID>
-                  <Description>"Force Parry Mode"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+16</Address>
-                </CheatEntry>
-                <CheatEntry>
-                  <ID>1337271288</ID>
-                  <Description>"All Stamina Consume"</Description>
-                  <ShowAsSigned>0</ShowAsSigned>
-                  <VariableType>Byte</VariableType>
-                  <Address>DebugFlags+17</Address>
-                </CheatEntry>
-              </CheatEntries>
-            </CheatEntry>
-            <CheatEntry>
-              <ID>1337271293</ID>
-              <Description>"Hitbox Views"</Description>
-              <Options moHideChildren="1"/>
-              <GroupHeader>1</GroupHeader>
-              <CheatEntries>
-                <CheatEntry>
-                  <ID>1337271297</ID>
-                  <Description>"All Draw Hit"</Description>
+                  <ID>1337274795</ID>
+                  <Description>"Enable WorldDbg Draws (REQUIRED FOR MANY DRAWS HERE)"</Description>
+                  <LastState Value="1" RealAddress="7FF4A94FF85F"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Byte</VariableType>
                   <Address>worldchrmandbg</Address>
                   <Offsets>
-                    <Offset>70</Offset>
+                    <Offset>6f</Offset>
                   </Offsets>
                 </CheatEntry>
                 <CheatEntry>
-                  <ID>1337274713</ID>
+                  <ID>1337274796</ID>
                   <Description>"Draw Character Meshes"</Description>
-                  <Options moHideChildren="1"/>
-                  <VariableType>Auto Assembler Script</VariableType>
-                  <AssemblerScript>[ENABLE]
-aobscanmodule(DrawChrMeshAOB,sekiro.exe,49 8b 36 33 db 8b 3e 85 ff) // should be unique
-define(DrawChrMeshInject,DrawChrMeshAOB+22)
-alloc(newmem,$1000,DrawChrMeshInject)
-registersymbol(DrawChrMeshInject)
-
-label(return)
-
-
-newmem:
-  //DrawChrRagdollDebug(ChrIns-&gt;ChrCtrl-&gt;FrpgRagdollIns)
-  mov rcx,[rax+50]
-  cmp rcx,0
-  je return
-  mov rcx,[rcx+28]
-  cmp rcx,0
-  je return
-  call DrawDebugMesh
-  jmp return
-
-DrawChrMeshInject:
-  jmp newmem
-  nop
-return:
-
-RenderFlags+3:
-db 1
-
-[WorldChrManDbg]+6f:
-db 1
-
-[DISABLE]
-
-RenderFlags+3:
-db 0
-
-[WorldChrManDbg]+6f:
-db 0
-
-DrawChrMeshInject:
-db FF 92 30 07 00 00
-
-dealloc(newmem)
-unregistersymbol(DrawChrMeshInject)
-</AssemblerScript>
+                  <LastState Value="0" RealAddress="143D77FA7"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>RenderFlags+3</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337274797</ID>
+                  <Description>"Draw Targeting View"</Description>
+                  <LastState Value="0" RealAddress="143D54A2A"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>TargetingDrawFlags+2</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337274760</ID>
+                  <Description>"Draw Sound View"</Description>
+                  <LastState Value="0" RealAddress="7FF4A8359910"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>worldaimanager</Address>
+                  <Offsets>
+                    <Offset>20</Offset>
+                    <Offset>1400+b8</Offset>
+                  </Offsets>
                 </CheatEntry>
                 <CheatEntry>
                   <ID>1337272505</ID>
                   <Description>"Damage Management"</Description>
                   <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
                   <GroupHeader>1</GroupHeader>
                   <CheatEntries>
                     <CheatEntry>
                       <ID>1337272506</ID>
                       <Description>"Debug sphere display"</Description>
+                      <LastState Value="0" RealAddress="7FF4A1F8CD40"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>DamageManagement</Address>
@@ -22023,6 +22235,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337272507</ID>
                       <Description>"Debug sphere display 2"</Description>
+                      <LastState Value="0" RealAddress="7FF4A1F8CD41"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>DamageManagement</Address>
@@ -22033,6 +22246,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337272511</ID>
                       <Description>"Display debug information"</Description>
+                      <LastState Value="0" RealAddress="7FF4A1F8CD42"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>DamageManagement</Address>
@@ -22043,6 +22257,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337272510</ID>
                       <Description>"Display the farthest attack arrival point"</Description>
+                      <LastState Value="0" RealAddress="7FF4A1F8CD43"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>DamageManagement</Address>
@@ -22053,6 +22268,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337272509</ID>
                       <Description>"Damage from weapon Damipoli"</Description>
+                      <LastState Value="1" RealAddress="7FF4A1F8CD44"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>DamageManagement</Address>
@@ -22063,6 +22279,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337272508</ID>
                       <Description>"Whether damage occurs by referring to attack parameters"</Description>
+                      <LastState Value="1" RealAddress="7FF4A1F8CD45"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>DamageManagement</Address>
@@ -22073,6 +22290,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337272512</ID>
                       <Description>"Whether to cast the damage with large rotation angle in multiple times"</Description>
+                      <LastState Value="1" RealAddress="7FF4A1F8CD46"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>DamageManagement</Address>
@@ -22083,6 +22301,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337272513</ID>
                       <Description>"Sparking distance"</Description>
+                      <LastState Value="0.5" RealAddress="7FF4A1F8CD2C"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Float</VariableType>
                       <Address>DamageManagement</Address>
@@ -22096,11 +22315,13 @@ unregistersymbol(DrawChrMeshInject)
                   <ID>1337274690</ID>
                   <Description>"Map Meshes"</Description>
                   <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
                   <GroupHeader>1</GroupHeader>
                   <CheatEntries>
                     <CheatEntry>
                       <ID>1337274691</ID>
                       <Description>"Display Low Hit Map"</Description>
+                      <LastState Value="0" RealAddress="143D77FA4"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>RenderFlags+0</Address>
@@ -22108,6 +22329,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337274696</ID>
                       <Description>"Display High Hit Map"</Description>
+                      <LastState Value="0" RealAddress="143D77FA5"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>RenderFlags+1</Address>
@@ -22115,6 +22337,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337274698</ID>
                       <Description>"Display Objects"</Description>
+                      <LastState Value="0" RealAddress="143D77FA6"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>RenderFlags+2</Address>
@@ -22122,6 +22345,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337274025</ID>
                       <Description>"Display All Chr Meshes (doesn't activate by itself)"</Description>
+                      <LastState Value="0" RealAddress="143D77FA7"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>RenderFlags+3</Address>
@@ -22129,6 +22353,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337274703</ID>
                       <Description>"Display Chr With Initial Arrangement"</Description>
+                      <LastState Value="0" RealAddress="143D77FA8"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>RenderFlags+4</Address>
@@ -22136,6 +22361,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337274694</ID>
                       <Description>"Display Enabled Display Groups"</Description>
+                      <LastState Value="0" RealAddress="143D77FA9"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>RenderFlags+5</Address>
@@ -22143,6 +22369,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337274697</ID>
                       <Description>"Display Enabled Backread Groups"</Description>
+                      <LastState Value="0" RealAddress="143D77FAA"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>RenderFlags+6</Address>
@@ -22150,6 +22377,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337274700</ID>
                       <Description>"Display Wall Data"</Description>
+                      <LastState Value="0" RealAddress="143D77FAB"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>RenderFlags+7</Address>
@@ -22157,6 +22385,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337274701</ID>
                       <Description>"Display Wall Jump Possible"</Description>
+                      <LastState Value="0" RealAddress="143D77FAC"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>RenderFlags+8</Address>
@@ -22164,6 +22393,7 @@ unregistersymbol(DrawChrMeshInject)
                     <CheatEntry>
                       <ID>1337274702</ID>
                       <Description>"Display Fall Prevention Wall"</Description>
+                      <LastState Value="0" RealAddress="143D77FAD"/>
                       <ShowAsSigned>0</ShowAsSigned>
                       <VariableType>Byte</VariableType>
                       <Address>RenderFlags+9</Address>
@@ -22176,6 +22406,7 @@ unregistersymbol(DrawChrMeshInject)
               <ID>1337271299</ID>
               <Description>"Debug Menu"</Description>
               <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
@@ -22185,6 +22416,7 @@ unregistersymbol(DrawChrMeshInject)
 1:Display Focus
 2:Display Background
 </DropDownList>
+                  <LastState Value="0" RealAddress="7FF3DFF90E30"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>Byte</VariableType>
                   <Address>debugmenu</Address>
@@ -22194,12 +22426,221 @@ unregistersymbol(DrawChrMeshInject)
                 </CheatEntry>
               </CheatEntries>
             </CheatEntry>
+            <CheatEntry>
+              <ID>1337271292</ID>
+              <Description>"CHR DBG"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>1337274023</ID>
+                  <Description>"-- VERIFIED ON LATEST ONLY --"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>C0C0C0</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271264</ID>
+                  <Description>"Player No Dead"</Description>
+                  <LastState Value="0" RealAddress="143D7A366"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+0</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271266</ID>
+                  <Description>"Player Exterminate"</Description>
+                  <LastState Value="0" RealAddress="143D7A367"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+1</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271268</ID>
+                  <Description>"Player Exterminate Stamina"</Description>
+                  <LastState Value="0" RealAddress="143D7A368"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+2</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271267</ID>
+                  <Description>"Player No Goods Consume"</Description>
+                  <LastState Value="0" RealAddress="143D7A369"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+3</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271269</ID>
+                  <Description>"Player No ResourceItem Consume (SpiritEmblems)"</Description>
+                  <LastState Value="0" RealAddress="143D7A36A"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+4</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271270</ID>
+                  <Description>"Player No Revival Consume"</Description>
+                  <LastState Value="0" RealAddress="143D7A36B"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+5</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271271</ID>
+                  <Description>"All No MP Consume"</Description>
+                  <LastState Value="0" RealAddress="143D7A36C"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+6</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271272</ID>
+                  <Description>"All No Arrow Consume"</Description>
+                  <LastState Value="0" RealAddress="143D7A36D"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+7</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271273</ID>
+                  <Description>"All No Magic Consume"</Description>
+                  <LastState Value="0" RealAddress="143D7A36E"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+8</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271274</ID>
+                  <Description>"Player Hide"</Description>
+                  <LastState Value="0" RealAddress="143D7A36F"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+9</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271275</ID>
+                  <Description>"Player Silence"</Description>
+                  <LastState Value="0" RealAddress="143D7A370"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+a</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271276</ID>
+                  <Description>"All No Dead"</Description>
+                  <LastState Value="0" RealAddress="143D7A371"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+b</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271281</ID>
+                  <Description>"All No Damage"</Description>
+                  <LastState Value="0" RealAddress="143D7A372"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+c</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271280</ID>
+                  <Description>"All No Hit"</Description>
+                  <LastState Value="0" RealAddress="143D7A373"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+d</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271279</ID>
+                  <Description>"All No Attack"</Description>
+                  <LastState Value="0" RealAddress="143D7A374"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+e</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271278</ID>
+                  <Description>"All No Move"</Description>
+                  <LastState Value="0" RealAddress="143D7A375"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+f</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271283</ID>
+                  <Description>"All No WepProtDurability"</Description>
+                  <LastState Value="0" RealAddress="143D7A377"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+11</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271277</ID>
+                  <Description>"All No Update Ai"</Description>
+                  <LastState Value="0" RealAddress="143D7A376"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+10</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271282</ID>
+                  <Description>"All No Arts Points Consume"</Description>
+                  <LastState Value="0" RealAddress="143D7A378"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+12</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271284</ID>
+                  <Description>"All No Goods Consume"</Description>
+                  <LastState Value="0" RealAddress="143D7A379"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+13</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271285</ID>
+                  <Description>"All No ResourceItem Consume (SpiritEmblems)"</Description>
+                  <LastState Value="0" RealAddress="143D7A37A"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+14</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271286</ID>
+                  <Description>"Force Just Guard Mode"</Description>
+                  <LastState Value="0" RealAddress="143D7A37B"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+15</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271287</ID>
+                  <Description>"Force Parry Mode"</Description>
+                  <LastState Value="0" RealAddress="143D7A37C"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+16</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>1337271288</ID>
+                  <Description>"All Stamina Consume"</Description>
+                  <LastState Value="0" RealAddress="143D7A37D"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>DebugFlags+17</Address>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
           </CheatEntries>
         </CheatEntry>
         <CheatEntry>
           <ID>1337272535</ID>
           <Description>"DEPRECATED"</Description>
           <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
           <Color>C0C0C0</Color>
           <GroupHeader>1</GroupHeader>
           <CheatEntries>
@@ -22207,6 +22648,7 @@ unregistersymbol(DrawChrMeshInject)
               <ID>1337272529</ID>
               <Description>"Give Goods | Use "Give Item Debug""</Description>
               <Options moHideChildren="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(ItemID, 2)
@@ -22701,12 +23143,14 @@ allItemList = nil
                 <CheatEntry>
                   <ID>1337272530</ID>
                   <Description>"-- Some skills are items!"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
                   <Color>C08080</Color>
                   <GroupHeader>1</GroupHeader>
                 </CheatEntry>
                 <CheatEntry>
                   <ID>1337272531</ID>
                   <Description>"Spawn Item"</Description>
+                  <LastState/>
                   <Color>808000</Color>
                   <VariableType>Auto Assembler Script</VariableType>
                   <AssemblerScript>{$lua}
@@ -23031,6 +23475,7 @@ disableMemrec(memrec)
 2110:Puppeteer Ninjutsu
 2120:Bestowal Ninjutsu
 </DropDownList>
+              <LastState Value="2110" RealAddress="7FF49E7DEA38"/>
               <ShowAsSigned>1</ShowAsSigned>
               <VariableType>4 Bytes</VariableType>
               <Address>worldchrman</Address>
@@ -23072,6 +23517,72 @@ disableMemrec(memrec)
         <Byte>3B</Byte>
         <Byte>DF</Byte>
         <Byte>7C</Byte>
+      </After>
+    </CodeEntry>
+    <CodeEntry>
+      <Description>Change of je sekiro.exe+6114FE</Description>
+      <AddressString>sekiro.exe+6114BD</AddressString>
+      <Before>
+        <Byte>20</Byte>
+        <Byte>00</Byte>
+        <Byte>48</Byte>
+        <Byte>8B</Byte>
+        <Byte>F2</Byte>
+      </Before>
+      <Actual>
+        <Byte>74</Byte>
+        <Byte>3F</Byte>
+      </Actual>
+      <After>
+        <Byte>48</Byte>
+        <Byte>89</Byte>
+        <Byte>5C</Byte>
+        <Byte>24</Byte>
+        <Byte>30</Byte>
+      </After>
+    </CodeEntry>
+    <CodeEntry>
+      <Description>Change of jmp sekiro.exe+625E6B</Description>
+      <AddressString>sekiro.exe+625E67</AddressString>
+      <Before>
+        <Byte>00</Byte>
+        <Byte>75</Byte>
+        <Byte>04</Byte>
+        <Byte>33</Byte>
+        <Byte>D2</Byte>
+      </Before>
+      <Actual>
+        <Byte>EB</Byte>
+        <Byte>02</Byte>
+      </Actual>
+      <After>
+        <Byte>B2</Byte>
+        <Byte>01</Byte>
+        <Byte>48</Byte>
+        <Byte>8B</Byte>
+        <Byte>CE</Byte>
+      </After>
+    </CodeEntry>
+    <CodeEntry>
+      <Description>Change of je sekiro.exe+A4CB2F</Description>
+      <AddressString>sekiro.exe+A4CABA</AddressString>
+      <Before>
+        <Byte>03</Byte>
+        <Byte>80</Byte>
+        <Byte>78</Byte>
+        <Byte>6F</Byte>
+        <Byte>00</Byte>
+      </Before>
+      <Actual>
+        <Byte>74</Byte>
+        <Byte>73</Byte>
+      </Actual>
+      <After>
+        <Byte>48</Byte>
+        <Byte>89</Byte>
+        <Byte>6C</Byte>
+        <Byte>24</Byte>
+        <Byte>38</Byte>
       </After>
     </CodeEntry>
   </CheatCodes>
@@ -23141,6 +23652,10 @@ disableMemrec(memrec)
       <Address>143D77FA4</Address>
     </SymbolEntry>
     <SymbolEntry>
+      <Name>TargetingDrawFlags</Name>
+      <Address>143D54A28</Address>
+    </SymbolEntry>
+    <SymbolEntry>
       <Name>GiveItemDebug</Name>
       <Address>1407A2BD0</Address>
     </SymbolEntry>
@@ -23161,4 +23676,6 @@ disableMemrec(memrec)
       <Address>140954320</Address>
     </SymbolEntry>
   </UserdefinedSymbols>
+  <LuaScript>
+</LuaScript>
 </CheatTable>
