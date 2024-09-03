@@ -276,7 +276,7 @@ end
           <ID>17</ID>
           <Description>"Hero"</Description>
           <Options moHideChildren="1"/>
-          <LastState Value="" Activated="1" RealAddress="7FF4A1C04E08"/>
+          <LastState Value="" RealAddress="7FF4A1C04E08"/>
           <ShowAsHex>1</ShowAsHex>
           <ShowAsSigned>0</ShowAsSigned>
           <GroupHeader>1</GroupHeader>
@@ -583,7 +583,7 @@ end
               <ID>38</ID>
               <Description>"Character Flags"</Description>
               <Options moHideChildren="1"/>
-              <LastState Value="" Activated="1" RealAddress="00000000"/>
+              <LastState Value="" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
@@ -2053,7 +2053,7 @@ end
                 <CheatEntry>
                   <ID>1337104258</ID>
                   <Description>"PlayTime"</Description>
-                  <LastState Value="107337608" RealAddress="7FF49E6D06AC"/>
+                  <LastState Value="108004716" RealAddress="7FF49E6D06AC"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>gamedata</Address>
@@ -2114,7 +2114,7 @@ end
           <ID>1337271240</ID>
           <Description>"Scripts"</Description>
           <Options moHideChildren="1"/>
-          <LastState Value="" Activated="1" RealAddress="00000000"/>
+          <LastState Value="" RealAddress="00000000"/>
           <GroupHeader>1</GroupHeader>
           <CheatEntries>
             <CheatEntry>
@@ -2586,7 +2586,7 @@ disableMemrec(memrec)
                 </CheatEntry>
                 <CheatEntry>
                   <ID>1337275147</ID>
-                  <Description>"Location"</Description>
+                  <Description>"Amount"</Description>
                   <DropDownList DescriptionOnly="1" DisplayValueAsItem="1">1001950:Dragonspring - Hirata Estate
 1001951:Estate Path
 1001952:Bamboo Thicket Slope
@@ -10451,7 +10451,7 @@ EventFlags.setFlag(9830, 0)
                     </CheatEntry>
                     <CheatEntry>
                       <ID>1337275134</ID>
-                      <Description>"Enable/Disable Charm"</Description>
+                      <Description>"Enable/Disable Charmless"</Description>
                       <LastState/>
                       <VariableType>Auto Assembler Script</VariableType>
                       <AssemblerScript>{$lua}
@@ -10742,7 +10742,7 @@ EventFlags.setFlag(8304, 0)
               <ID>1337275138</ID>
               <Description>"Warp"</Description>
               <Options moHideChildren="1"/>
-              <LastState Activated="1"/>
+              <LastState/>
               <VariableType>Auto Assembler Script</VariableType>
               <AssemblerScript>[ENABLE]
 alloc(WarpID, 4)
@@ -10834,7 +10834,6 @@ disableMemrec(memrec)
 2501958:Near Pot Noble
 2501955:Sanctuary
 </DropDownList>
-                  <LastState Value="1121951" RealAddress="00780000"/>
                   <ShowAsSigned>0</ShowAsSigned>
                   <VariableType>4 Bytes</VariableType>
                   <Address>WarpID</Address>
@@ -10904,7 +10903,7 @@ end
 2:On (unknown)
 3:Freeze Cam, Allow Player Movement
 </DropDownList>
-              <LastState Value="" Activated="1" RealAddress="00000000"/>
+              <LastState Value="" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
@@ -11075,7 +11074,7 @@ disableMemrec(memrec)
               <ID>1337275125</ID>
               <Description>"Open Menus"</Description>
               <Options moHideChildren="1"/>
-              <LastState Value="" RealAddress="00000000"/>
+              <LastState Value="" Activated="1" RealAddress="00000000"/>
               <GroupHeader>1</GroupHeader>
               <CheatEntries>
                 <CheatEntry>
